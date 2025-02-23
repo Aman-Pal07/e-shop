@@ -6,36 +6,34 @@ export const loadUser = () => async (dispatch) => {
   try {
     dispatch({ type: "LoadUserRequest" });
 
-    console.log("Making request to load user...");
+    const token = localStorage.getItem("token");
 
-    const token = localStorage.getItem("token"); // Get token from localStorage
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
 
     const { data } = await axios.get(`${server}/user/getuser`, {
       withCredentials: true,
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`, // Send token in header
+        Authorization: `Bearer ${token}`,
       },
     });
 
-    console.log("Load user response:", data);
-
-    if (data && data.user) {
-      dispatch({ type: "LoadUserSuccess", payload: data.user });
-      console.log("User loaded successfully:", data.user);
-    } else {
-      throw new Error("User data not found in response");
-    }
+    dispatch({ type: "LoadUserSuccess", payload: data.user });
   } catch (error) {
-    console.error("Load user error:", error);
-    console.error("Full error response:", error.response);
+    console.error("Load user error:", {
+      message: error.response?.data?.message || error.message,
+      status: error.response?.status,
+      data: error.response?.data,
+    });
+
     dispatch({
       type: "LoadUserFail",
       payload: error.response?.data?.message || "Failed to load user",
     });
   }
 };
-
 // load seller
 export const loadSeller = () => async (dispatch) => {
   try {

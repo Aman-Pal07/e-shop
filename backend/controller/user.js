@@ -135,7 +135,7 @@ router.get(
       const user = await User.findById(req.user._id);
 
       if (!user) {
-        return next(new ErrorHandler("User doesn't exist", 400));
+        return next(new ErrorHandler("User not found", 400));
       }
 
       res.status(200).json({
