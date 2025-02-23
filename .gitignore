@@ -1,0 +1,62 @@
+# Node.js dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+
+# Environment variables
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+.env.*.local
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+lerna-debug.log*
+/log
+/logs
+/debug.log
+/output.log
+
+# Build files
+dist/
+build/
+.next/
+out/
+.cache/
+.vite/
+.vercel/
+.netlify/
+
+# Editor & System files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# MongoDB database dumps
+dump/
+data/
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Docker
+docker-compose.override.yml
+docker-compose.debug.yml
+
+# Others
+*.bak
+*.backup
+*.old
