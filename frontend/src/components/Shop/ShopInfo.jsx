@@ -1,6 +1,6 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { server } from "../../server";
 import styles from "../../styles/styles";
 import Loader from "../Layout/Loader";
@@ -13,7 +13,6 @@ const ShopInfo = ({ isOwner }) => {
   const [isLoading, setIsLoading] = useState(false);
   const { id } = useParams();
   const dispatch = useDispatch();
-  const navigate = useNavigate();
 
   useEffect(() => {
     dispatch(getAllProductsShop(id));
@@ -31,30 +30,10 @@ const ShopInfo = ({ isOwner }) => {
   }, []);
 
   const logoutHandler = async () => {
-    try {
-      setIsLoading(true);
-      const response = await axios.get(`${server}/shop/logout`, {
-        withCredentials: true,
-      });
-
-      if (response.data.success) {
-        // Clear any auth tokens from localStorage
-        localStorage.removeItem("shopToken"); // adjust based on your token key
-
-        // Clear any Redux state if needed
-        // dispatch(clearShopState());
-
-        // Redirect to login or home page
-        navigate("/shop-login");
-      } else {
-        throw new Error("Logout failed");
-      }
-    } catch (error) {
-      console.error("Logout error:", error);
-      alert("Logout failed. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
+    axios.get(`${server}/shop/logout`, {
+      withCredentials: true,
+    });
+    window.location.reload();
   };
 
   const totalReviewsLength =
