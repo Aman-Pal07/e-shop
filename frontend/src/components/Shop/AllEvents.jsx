@@ -1,6 +1,3 @@
-import { Button, Chip, Typography, Paper } from "@mui/material";
-import { DataGrid } from "@mui/x-data-grid";
-
 import React, { useEffect } from "react";
 import { AiOutlineDelete, AiOutlineEye } from "react-icons/ai";
 import { useDispatch, useSelector } from "react-redux";
@@ -24,64 +21,50 @@ const AllEvents = () => {
     dispatch(getAllEventsShop(seller._id)); // Refresh event list after deletion
   };
 
-  const columns = [
-    { field: "id", headerName: "ID", width: 100 },
-    { field: "name", headerName: "Name", width: 140 },
-    { field: "price", headerName: "Price", width: 90 },
-    { field: "stock", headerName: "Stock", type: "number", width: 80 },
-    { field: "sold", headerName: "Sold", type: "number", width: 80 },
-    {
-      field: "preview",
-      headerName: "View",
-      width: 70,
-      sortable: false,
-      renderCell: (params) => {
-        return (
-          <>
-            <Link to={`/product/${params.id}`}>
-              <Button>
-                <AiOutlineEye size={20} />
-              </Button>
-            </Link>
-          </>
-        );
-      },
-    },
-    {
-      field: "delete",
-      headerName: "Del",
-      width: 70,
-      sortable: false,
-      renderCell: ({ id }) => (
-        <Button onClick={() => handleDelete(id)}>
-          <AiOutlineDelete size={16} className="text-red-600" />
-        </Button>
-      ),
-    },
-  ];
-
-  const rows =
-    events?.map((item) => ({
-      id: item._id,
-      name: item.name,
-      price: `US$ ${item.discountPrice}`,
-      stock: item.stock,
-      sold: item?.sold_out || 0,
-    })) || [];
-
   return isLoading ? (
     <Loader />
   ) : (
-    <div className="w-[800px] mx-auto bg-white shadow-md rounded-lg p-3">
-      <DataGrid
-        rows={rows}
-        columns={columns}
-        pageSizeOptions={[5, 10]}
-        pagination
-        autoHeight
-        disableSelectionOnClick
-        className="text-sm"
-      />
+    <div className="w-full max-w-3xl mx-auto bg-white shadow-md rounded-lg p-4 mt-5">
+      <h2 className="text-lg font-semibold text-gray-700 mb-4">All Events</h2>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse border border-gray-200">
+          <thead>
+            <tr className="bg-gray-100 text-gray-700">
+              <th className="p-2 border">ID</th>
+              <th className="p-2 border">Name</th>
+              <th className="p-2 border">Price</th>
+              <th className="p-2 border">Stock</th>
+              <th className="p-2 border">Sold</th>
+              <th className="p-2 border">View</th>
+              <th className="p-2 border">Delete</th>
+            </tr>
+          </thead>
+          <tbody>
+            {events?.map((item) => (
+              <tr key={item._id} className="text-center border-b">
+                <td className="p-2 border">{item._id}</td>
+                <td className="p-2 border">{item.name}</td>
+                <td className="p-2 border">US$ {item.discountPrice}</td>
+                <td className="p-2 border">{item.stock}</td>
+                <td className="p-2 border">{item?.sold_out || 0}</td>
+                <td className="p-2 border">
+                  <Link to={`/product/${item._id}`} className="text-blue-500">
+                    <AiOutlineEye size={20} />
+                  </Link>
+                </td>
+                <td className="p-2 border">
+                  <button
+                    onClick={() => handleDelete(item._id)}
+                    className="text-red-600 hover:text-red-800"
+                  >
+                    <AiOutlineDelete size={16} />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

@@ -1,16 +1,8 @@
-import { Button, Chip, Typography, Paper } from "@mui/material";
-import { DataGrid } from "@mui/x-data-grid";
-
-import React, { useEffect } from "react";
-import { AiOutlineDelete, AiOutlineEye } from "react-icons/ai";
-import { useDispatch, useSelector } from "react-redux";
+import React, { useEffect, useState } from "react";
+import { AiOutlineEye } from "react-icons/ai";
 import { Link } from "react-router-dom";
-import { getAllProductsShop } from "../../redux/actions/product";
-import { deleteProduct } from "../../redux/actions/product";
-import Loader from "../Layout/Loader";
 import axios from "axios";
 import { server } from "../../server";
-import { useState } from "react";
 
 const AllProducts = () => {
   const [data, setData] = useState([]);
@@ -23,81 +15,46 @@ const AllProducts = () => {
       });
   }, []);
 
-  const columns = [
-    { field: "id", headerName: "Product Id", minWidth: 150, flex: 0.7 },
-    {
-      field: "name",
-      headerName: "Name",
-      minWidth: 180,
-      flex: 1.4,
-    },
-    {
-      field: "price",
-      headerName: "Price",
-      minWidth: 100,
-      flex: 0.6,
-    },
-    {
-      field: "Stock",
-      headerName: "Stock",
-      type: "number",
-      minWidth: 80,
-      flex: 0.5,
-    },
-
-    {
-      field: "sold",
-      headerName: "Sold out",
-      type: "number",
-      minWidth: 130,
-      flex: 0.6,
-    },
-    {
-      field: "Preview",
-      flex: 0.8,
-      minWidth: 100,
-      headerName: "",
-      type: "number",
-      sortable: false,
-      renderCell: (params) => {
-        return (
-          <>
-            <Link to={`/product/${params.id}`}>
-              <Button>
-                <AiOutlineEye size={20} />
-              </Button>
-            </Link>
-          </>
-        );
-      },
-    },
-  ];
-
-  const row = [];
-
-  data &&
-    data.forEach((item) => {
-      row.push({
-        id: item._id,
-        name: item.name,
-        price: "US$ " + item.discountPrice,
-        Stock: item.stock,
-        sold: item?.sold_out,
-      });
-    });
-
   return (
-    <>
-      <div className="w-full mx-8 pt-1 mt-10 bg-white">
-        <DataGrid
-          rows={row}
-          columns={columns}
-          pageSize={10}
-          disableSelectionOnClick
-          autoHeight
-        />
+    <div className="w-full mx-8 pt-1 mt-10 bg-white p-4 rounded-lg shadow-md">
+      <h2 className="text-xl font-semibold mb-4">All Products</h2>
+      <div className="overflow-x-auto">
+        <table className="w-full border border-gray-200">
+          <thead>
+            <tr className="bg-gray-100">
+              <th className="px-4 py-2 text-left border">Product Id</th>
+              <th className="px-4 py-2 text-left border">Name</th>
+              <th className="px-4 py-2 text-left border">Price</th>
+              <th className="px-4 py-2 text-left border">Stock</th>
+              <th className="px-4 py-2 text-left border">Sold Out</th>
+              <th className="px-4 py-2 text-left border">Preview</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((item) => (
+              <tr key={item._id} className="border-b">
+                <td className="px-4 py-2 border">{item._id}</td>
+                <td className="px-4 py-2 border">{item.name}</td>
+                <td className="px-4 py-2 border">US$ {item.discountPrice}</td>
+                <td className="px-4 py-2 border">{item.stock}</td>
+                <td className="px-4 py-2 border">{item.sold_out}</td>
+                <td className="px-4 py-2 border">
+                  <Link
+                    to={`/product/${item._id}`}
+                    className="text-blue-500 hover:underline flex items-center"
+                  >
+                    <AiOutlineEye size={20} className="mr-1" /> View
+                  </Link>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {data.length === 0 && (
+          <p className="text-center text-gray-500 mt-4">No products found</p>
+        )}
       </div>
-    </>
+    </div>
   );
 };
 

@@ -1,19 +1,14 @@
-import React, { useEffect, useState } from "react";
-import styles from "../../styles/styles";
+import React, { useEffect } from "react";
 import { AiOutlineArrowRight, AiOutlineMoneyCollect } from "react-icons/ai";
 import { MdBorderClear } from "react-icons/md";
 import { Link } from "react-router-dom";
-import { Button, Chip, Typography, Paper } from "@mui/material";
-import { DataGrid } from "@mui/x-data-grid";
-
 import { useDispatch, useSelector } from "react-redux";
 import { getAllOrdersOfAdmin } from "../../redux/actions/order";
-import Loader from "../Layout/Loader";
 import { getAllSellers } from "../../redux/actions/sellers";
+import Loader from "../Layout/Loader";
 
 const AdminDashboardMain = () => {
   const dispatch = useDispatch();
-
   const { adminOrders, adminOrderLoading } = useSelector(
     (state) => state.order
   );
@@ -27,58 +22,7 @@ const AdminDashboardMain = () => {
   const adminEarning =
     adminOrders &&
     adminOrders.reduce((acc, item) => acc + item.totalPrice * 0.1, 0);
-
   const adminBalance = adminEarning?.toFixed(2);
-
-  const columns = [
-    { field: "id", headerName: "Order ID", minWidth: 150, flex: 0.7 },
-
-    {
-      field: "status",
-      headerName: "Status",
-      minWidth: 130,
-      flex: 0.7,
-      cellClassName: (params) => {
-        return params.getValue(params.id, "status") === "Delivered"
-          ? "greenColor"
-          : "redColor";
-      },
-    },
-    {
-      field: "itemsQty",
-      headerName: "Items Qty",
-      type: "number",
-      minWidth: 130,
-      flex: 0.7,
-    },
-
-    {
-      field: "total",
-      headerName: "Total",
-      type: "number",
-      minWidth: 130,
-      flex: 0.8,
-    },
-    {
-      field: "createdAt",
-      headerName: "Order Date",
-      type: "number",
-      minWidth: 130,
-      flex: 0.8,
-    },
-  ];
-
-  const row = [];
-  adminOrders &&
-    adminOrders.forEach((item) => {
-      row.push({
-        id: item._id,
-        itemsQty: item?.cart?.reduce((acc, item) => acc + item.qty, 0),
-        total: item?.totalPrice + " $",
-        status: item?.status,
-        createdAt: item?.createdAt.slice(0, 10),
-      });
-    });
 
   return (
     <>
@@ -86,75 +30,96 @@ const AdminDashboardMain = () => {
         <Loader />
       ) : (
         <div className="w-full p-4">
-          <h3 className="text-[22px] font-Poppins pb-2">Overview</h3>
-          <div className="w-full block 800px:flex items-center justify-between">
-            <div className="w-full mb-4 800px:w-[30%] min-h-[20vh] bg-white shadow rounded px-2 py-5">
+          <h3 className="text-[22px] font-semibold pb-2">Overview</h3>
+          <div className="w-full flex flex-wrap gap-4">
+            {/* Total Earnings Card */}
+            <div className="w-full sm:w-[30%] bg-white shadow-md rounded-lg p-5">
               <div className="flex items-center">
                 <AiOutlineMoneyCollect
                   size={30}
-                  className="mr-2"
-                  fill="#00000085"
+                  className="mr-2 text-gray-600"
                 />
-                <h3
-                  className={`${styles.productTitle} !text-[18px] leading-5 !font-[400] text-[#00000085]`}
-                >
+                <h3 className="text-lg font-medium text-gray-600">
                   Total Earning
                 </h3>
               </div>
-              <h5 className="pt-2 pl-[36px] text-[22px] font-[500]">
-                $ {adminBalance}
+              <h5 className="pt-2 text-2xl font-semibold pl-9">
+                ${adminBalance}
               </h5>
             </div>
 
-            <div className="w-full mb-4 800px:w-[30%] min-h-[20vh] bg-white shadow rounded px-2 py-5">
+            {/* All Sellers Card */}
+            <div className="w-full sm:w-[30%] bg-white shadow-md rounded-lg p-5">
               <div className="flex items-center">
-                <MdBorderClear size={30} className="mr-2" fill="#00000085" />
-                <h3
-                  className={`${styles.productTitle} !text-[18px] leading-5 !font-[400] text-[#00000085]`}
-                >
+                <MdBorderClear size={30} className="mr-2 text-gray-600" />
+                <h3 className="text-lg font-medium text-gray-600">
                   All Sellers
                 </h3>
               </div>
-              <h5 className="pt-2 pl-[36px] text-[22px] font-[500]">
-                {sellers && sellers.length}
+              <h5 className="pt-2 text-2xl font-semibold pl-9">
+                {sellers?.length}
               </h5>
-              <Link to="/admin-sellers">
-                <h5 className="pt-4 pl-2 text-[#077f9c]">View Sellers</h5>
+              <Link to="/admin-sellers" className="text-blue-600 pt-2 block">
+                View Sellers
               </Link>
             </div>
 
-            <div className="w-full mb-4 800px:w-[30%] min-h-[20vh] bg-white shadow rounded px-2 py-5">
+            {/* All Orders Card */}
+            <div className="w-full sm:w-[30%] bg-white shadow-md rounded-lg p-5">
               <div className="flex items-center">
                 <AiOutlineMoneyCollect
                   size={30}
-                  className="mr-2"
-                  fill="#00000085"
+                  className="mr-2 text-gray-600"
                 />
-                <h3
-                  className={`${styles.productTitle} !text-[18px] leading-5 !font-[400] text-[#00000085]`}
-                >
+                <h3 className="text-lg font-medium text-gray-600">
                   All Orders
                 </h3>
               </div>
-              <h5 className="pt-2 pl-[36px] text-[22px] font-[500]">
-                {adminOrders && adminOrders.length}
+              <h5 className="pt-2 text-2xl font-semibold pl-9">
+                {adminOrders?.length}
               </h5>
-              <Link to="/admin-orders">
-                <h5 className="pt-4 pl-2 text-[#077f9c]">View Orders</h5>
+              <Link to="/admin-orders" className="text-blue-600 pt-2 block">
+                View Orders
               </Link>
             </div>
           </div>
 
           <br />
-          <h3 className="text-[22px] font-Poppins pb-2">Latest Orders</h3>
-          <div className="w-full min-h-[45vh] bg-white rounded">
-            <DataGrid
-              rows={row}
-              columns={columns}
-              pageSize={4}
-              disableSelectionOnClick
-              autoHeight
-            />
+          <h3 className="text-[22px] font-semibold pb-2">Latest Orders</h3>
+          {/* Orders Table */}
+          <div className="w-full overflow-x-auto bg-white shadow-md rounded-lg p-4">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-gray-200 text-gray-700">
+                  <th className="p-3 text-left">Order ID</th>
+                  <th className="p-3 text-left">Status</th>
+                  <th className="p-3 text-left">Items Qty</th>
+                  <th className="p-3 text-left">Total</th>
+                  <th className="p-3 text-left">Order Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {adminOrders?.map((order) => (
+                  <tr key={order._id} className="border-b">
+                    <td className="p-3">{order._id}</td>
+                    <td
+                      className={`p-3 ${
+                        order.status === "Delivered"
+                          ? "text-green-600"
+                          : "text-red-600"
+                      }`}
+                    >
+                      {order.status}
+                    </td>
+                    <td className="p-3">
+                      {order?.cart?.reduce((acc, item) => acc + item.qty, 0)}
+                    </td>
+                    <td className="p-3">${order?.totalPrice}</td>
+                    <td className="p-3">{order?.createdAt.slice(0, 10)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
