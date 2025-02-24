@@ -1,71 +1,43 @@
 import { Button } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
-
 import React, { useEffect } from "react";
 import { AiOutlineDelete, AiOutlineEye } from "react-icons/ai";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
-import { getAllProductsShop } from "../../redux/actions/product";
-import { deleteProduct } from "../../redux/actions/product";
+import { getAllProductsShop, deleteProduct } from "../../redux/actions/product";
 import Loader from "../Layout/Loader";
 
 const AllProducts = () => {
+  const dispatch = useDispatch();
   const { products, isLoading } = useSelector((state) => state.products);
   const { seller } = useSelector((state) => state.seller);
 
-  const dispatch = useDispatch();
-
   useEffect(() => {
-    dispatch(getAllProductsShop(seller._id));
-  }, [dispatch]);
+    if (seller?._id) {
+      dispatch(getAllProductsShop(seller._id));
+    }
+  }, [dispatch, seller?._id]);
 
-  const handleDelete = (id) => {
-    dispatch(deleteProduct(id));
-    window.location.reload();
+  const handleDelete = async (id) => {
+    await dispatch(deleteProduct(id));
+    dispatch(getAllProductsShop(seller._id)); // Refresh product list after deletion
   };
 
   const columns = [
-    { field: "id", headerName: "Product Id", minWidth: 150, flex: 0.7 },
+    { field: "id", headerName: "ID", width: 100 },
+    { field: "name", headerName: "Name", width: 140 },
+    { field: "price", headerName: "Price", width: 90 },
+    { field: "stock", headerName: "Stock", type: "number", width: 80 },
+    { field: "sold", headerName: "Sold", type: "number", width: 80 },
     {
-      field: "name",
-      headerName: "Name",
-      minWidth: 180,
-      flex: 1.4,
-    },
-    {
-      field: "price",
-      headerName: "Price",
-      minWidth: 100,
-      flex: 0.6,
-    },
-    {
-      field: "Stock",
-      headerName: "Stock",
-      type: "number",
-      minWidth: 80,
-      flex: 0.5,
-    },
-
-    {
-      field: "sold",
-      headerName: "Sold out",
-      type: "number",
-      minWidth: 130,
-      flex: 0.6,
-    },
-    {
-      field: "Preview",
-      flex: 0.8,
-      minWidth: 100,
-      headerName: "",
-      type: "number",
+      field: "preview",
+      headerName: "View",
+      width: 70,
       sortable: false,
       renderCell: (params) => {
-        const d = params.row.name;
-        const product_name = d.replace(/\s+/g, "-");
         return (
           <>
-            <Link to={`/product/${product_name}`}>
+            <Link to={`/product/${params.id}`}>
               <Button>
                 <AiOutlineEye size={20} />
               </Button>
@@ -75,53 +47,41 @@ const AllProducts = () => {
       },
     },
     {
-      field: "Delete",
-      flex: 0.8,
-      minWidth: 120,
-      headerName: "",
-      type: "number",
+      field: "delete",
+      headerName: "Del",
+      width: 70,
       sortable: false,
-      renderCell: (params) => {
-        return (
-          <>
-            <Button onClick={() => handleDelete(params.id)}>
-              <AiOutlineDelete size={20} />
-            </Button>
-          </>
-        );
-      },
+      renderCell: ({ id }) => (
+        <Button onClick={() => handleDelete(id)}>
+          <AiOutlineDelete size={16} className="text-red-600" />
+        </Button>
+      ),
     },
   ];
 
-  const row = [];
+  const rows =
+    products?.map((item) => ({
+      id: item._id,
+      name: item.name,
+      price: `US$ ${item.discountPrice}`,
+      stock: item.stock,
+      sold: item?.sold_out || 0,
+    })) || [];
 
-  products &&
-    products.forEach((item) => {
-      row.push({
-        id: item._id,
-        name: item.name,
-        price: "US$ " + item.discountPrice,
-        Stock: item.stock,
-        sold: item?.sold_out,
-      });
-    });
-
-  return (
-    <>
-      {isLoading ? (
-        <Loader />
-      ) : (
-        <div className="w-full mx-8 pt-1 mt-10 bg-white">
-          <DataGrid
-            rows={row}
-            columns={columns}
-            pageSize={10}
-            disableSelectionOnClick
-            autoHeight
-          />
-        </div>
-      )}
-    </>
+  return isLoading ? (
+    <Loader />
+  ) : (
+    <div className="w-[800px] mx-auto  bg-white shadow-md rounded-lg p-3">
+      <DataGrid
+        rows={rows}
+        columns={columns}
+        pageSizeOptions={[5, 10]}
+        pagination
+        autoHeight
+        disableSelectionOnClick
+        className="text-sm"
+      />
+    </div>
   );
 };
 

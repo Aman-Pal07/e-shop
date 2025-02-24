@@ -1,15 +1,13 @@
 import { React, useState } from "react";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
+import styles from "../../styles/styles";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { server } from "../../server";
 import { toast } from "react-toastify";
-import { useDispatch } from "react-redux";
-import { loadUser } from "../../redux/actions/user";
 
 const Login = () => {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [visible, setVisible] = useState(false);
@@ -17,144 +15,126 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    try {
-      const response = await axios.post(
+    await axios
+      .post(
         `${server}/user/login-user`,
         {
           email,
           password,
         },
         { withCredentials: true }
-      );
-
-      if (response.data.success) {
-        // Load user data immediately after successful login
-        await dispatch(loadUser());
+      )
+      .then((res) => {
         toast.success("Login Success!");
         navigate("/");
-      }
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Login failed");
-    }
+        window.location.reload(true);
+      })
+      .catch((err) => {
+        toast.error(err.response.data.message);
+      });
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-8 bg-white rounded-xl shadow-lg p-8">
-        {/* Rest of your JSX remains the same */}
-        <div className="text-center">
-          <div className="mx-auto h-12 w-12 bg-indigo-100 rounded-full flex items-center justify-center">
-            <svg
-              className="h-6 w-6 text-indigo-600"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 11c1.104 0 2-.896 2-2s-.896-2-2-2-2 .896-2 2 .896 2 2 2zm0 2c-2.761 0-5 2.239-5 5v1h10v-1c0-2.761-2.239-5-5-5z"
-              />
-            </svg>
-          </div>
-          <h2 className="mt-4 text-2xl font-bold text-gray-900">
-            Welcome Back
-          </h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Please login to your account
-          </p>
-        </div>
-
-        <form className="space-y-6" onSubmit={handleSubmit}>
-          <div className="space-y-1">
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Email Address
-            </label>
-            <div className="relative">
-              <input
-                type="email"
-                name="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 outline-none"
-                placeholder="Enter your email"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Password
-            </label>
-            <div className="relative">
-              <input
-                type={visible ? "text" : "password"}
-                name="password"
-                autoComplete="current-password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 outline-none"
-                placeholder="Enter your password"
-              />
-              <button
-                type="button"
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                onClick={() => setVisible(!visible)}
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          Login to your account
+        </h2>
+      </div>
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            <div>
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700"
               >
+                Email address
+              </label>
+              <div className="mt-1">
+                <input
+                  type="email"
+                  name="email"
+                  autoComplete="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                />
+              </div>
+            </div>
+            <div>
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Password
+              </label>
+              <div className="mt-1 relative">
+                <input
+                  type={visible ? "text" : "password"}
+                  name="password"
+                  autoComplete="current-password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                />
                 {visible ? (
-                  <AiOutlineEye size={20} />
+                  <AiOutlineEye
+                    className="absolute right-2 top-2 cursor-pointer"
+                    size={25}
+                    onClick={() => setVisible(false)}
+                  />
                 ) : (
-                  <AiOutlineEyeInvisible size={20} />
+                  <AiOutlineEyeInvisible
+                    className="absolute right-2 top-2 cursor-pointer"
+                    size={25}
+                    onClick={() => setVisible(true)}
+                  />
                 )}
+              </div>
+            </div>
+            <div className={`${styles.noramlFlex} justify-between`}>
+              <div className={`${styles.noramlFlex}`}>
+                <input
+                  type="checkbox"
+                  name="remember-me"
+                  id="remember-me"
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label
+                  htmlFor="remember-me"
+                  className="ml-2 block text-sm text-gray-900"
+                >
+                  Remember me
+                </label>
+              </div>
+              <div className="text-sm">
+                <a
+                  href=".forgot-password"
+                  className="font-medium text-blue-600 hover:text-blue-500"
+                >
+                  Forgot your password?
+                </a>
+              </div>
+            </div>
+            <div>
+              <button
+                type="submit"
+                className="group relative w-full h-[40px] flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+              >
+                Submit
               </button>
             </div>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <label className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                name="remember-me"
-                id="remember-me"
-                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-              />
-              <span className="text-sm text-gray-600">Remember me</span>
-            </label>
-            <a
-              href="/forgot-password"
-              className="text-sm text-indigo-600 hover:text-indigo-800 transition-colors duration-200"
-            >
-              Forgot Password?
-            </a>
-          </div>
-
-          <button
-            type="submit"
-            className="w-full py-2.5 px-4 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-200 focus:outline-none transition-all duration-200"
-          >
-            Sign In
-          </button>
-
-          <div className="text-center text-sm">
-            <span className="text-gray-600">Don't have an account?</span>
-            <Link
-              to="/sign-up"
-              className="ml-1 text-indigo-600 hover:text-indigo-800 font-medium transition-colors duration-200"
-            >
-              Sign Up
-            </Link>
-          </div>
-        </form>
+            <div className={`${styles.noramlFlex} w-full`}>
+              <h4>Not have any account?</h4>
+              <Link to="/sign-up" className="text-blue-600 pl-2">
+                Sign Up
+              </Link>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );

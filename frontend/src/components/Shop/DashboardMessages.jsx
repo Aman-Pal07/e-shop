@@ -1,7 +1,7 @@
 import axios from "axios";
 import React, { useRef, useState } from "react";
 import { useEffect } from "react";
-import { backend_url, server } from "../../server";
+import { server } from "../../server";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { AiOutlineArrowRight, AiOutlineSend } from "react-icons/ai";
@@ -57,7 +57,7 @@ const DashboardMessages = () => {
       }
     };
     getConversation();
-  }, [seller,messages]);
+  }, [seller, messages]);
 
   useEffect(() => {
     if (seller) {
@@ -68,7 +68,6 @@ const DashboardMessages = () => {
       });
     }
   }, [seller]);
-  
 
   const onlineCheck = (chat) => {
     const chatMembers = chat.members.find((member) => member !== seller?._id);
@@ -243,7 +242,7 @@ const MessageList = ({
     >
       <div className="relative">
         <img
-          src={`${backend_url}${user?.avatar}`}
+          src={`${user?.avatar}`}
           alt=""
           className="w-[50px] h-[50px] rounded-full"
         />
@@ -277,14 +276,13 @@ const SellerInbox = ({
   userData,
   activeStatus,
 }) => {
-
   return (
     <div className="w-full min-h-full flex flex-col justify-between">
       {/* message header */}
       <div className="w-full flex p-3 items-center justify-between bg-slate-200">
         <div className="flex">
           <img
-            src={`${backend_url}${userData?.avatar}`}
+            src={`${userData?.avatar}`}
             alt=""
             className="w-[60px] h-[60px] rounded-full"
           />
@@ -312,7 +310,7 @@ const SellerInbox = ({
             >
               {item.sender !== sellerId && (
                 <img
-                  src={`${backend_url}${userData?.avatar}`}
+                  src={`${userData?.avatar}`}
                   className="w-[40px] h-[40px] rounded-full mr-3"
                   alt=""
                 />

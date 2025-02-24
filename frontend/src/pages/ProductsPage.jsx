@@ -110,7 +110,7 @@ const ProductsPage = () => {
                         >
                           <div className="w-12 h-12 rounded-md overflow-hidden flex-shrink-0 border border-gray-100">
                             <img
-                              src={i.images[0]}
+                              src={`${i.images[0]?.url}`}
                               alt={i.name}
                               className="w-full h-full object-cover"
                             />

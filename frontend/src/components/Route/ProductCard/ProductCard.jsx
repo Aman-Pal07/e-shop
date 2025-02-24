@@ -90,7 +90,7 @@ const ProductCard = ({ data, isEvent }) => {
         className="block relative w-full h-64 bg-gray-50 flex-shrink-0" // Fixed height
       >
         <img
-          src={`${data.images && data.images[0]}`}
+          src={`${data.images && data.images[0]?.url}`}
           alt={data.name}
           className="w-full h-full object-contain p-4 transition-transform duration-500 hover:scale-105"
         />

@@ -1,7 +1,7 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import { backend_url, server } from "../../server";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { server } from "../../server";
 import styles from "../../styles/styles";
 import Loader from "../Layout/Loader";
 import { useDispatch, useSelector } from "react-redux";
@@ -13,6 +13,7 @@ const ShopInfo = ({ isOwner }) => {
   const [isLoading, setIsLoading] = useState(false);
   const { id } = useParams();
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   useEffect(() => {
     dispatch(getAllProductsShop(id));
@@ -30,10 +31,30 @@ const ShopInfo = ({ isOwner }) => {
   }, []);
 
   const logoutHandler = async () => {
-    axios.get(`${server}/shop/logout`, {
-      withCredentials: true,
-    });
-    window.location.reload();
+    try {
+      setIsLoading(true);
+      const response = await axios.get(`${server}/shop/logout`, {
+        withCredentials: true,
+      });
+
+      if (response.data.success) {
+        // Clear any auth tokens from localStorage
+        localStorage.removeItem("shopToken"); // adjust based on your token key
+
+        // Clear any Redux state if needed
+        // dispatch(clearShopState());
+
+        // Redirect to login or home page
+        navigate("/shop-login");
+      } else {
+        throw new Error("Logout failed");
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+      alert("Logout failed. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const totalReviewsLength =
@@ -59,7 +80,7 @@ const ShopInfo = ({ isOwner }) => {
           <div className="w-full py-5">
             <div className="w-full flex item-center justify-center">
               <img
-                src={`${data.avatar}`}
+                src={`${data.avatar?.url}`}
                 alt=""
                 className="w-[150px] h-[150px] object-cover rounded-full"
               />

@@ -1,19 +1,13 @@
-import React, { useState, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { backend_url, server } from "../../server";
-import styles from "../../styles/styles";
-import { Button } from "@mui/material";
-import { DataGrid } from "@mui/x-data-grid";
-
-import { Link } from "react-router-dom";
+import React, { useState } from "react";
 import {
   AiOutlineArrowRight,
   AiOutlineCamera,
   AiOutlineDelete,
-  AiFillHeart,
-  AiOutlineHeart,
-  AiOutlineShoppingCart,
 } from "react-icons/ai";
+import { useDispatch, useSelector } from "react-redux";
+import { server } from "../../server";
+import styles from "../../styles/styles";
+import { Link } from "react-router-dom";
 import { MdTrackChanges } from "react-icons/md";
 import { RxCross1 } from "react-icons/rx";
 import {
@@ -23,6 +17,7 @@ import {
   updateUserInformation,
 } from "../../redux/actions/user";
 import { Country, State } from "country-state-city";
+import { useEffect } from "react";
 import { toast } from "react-toastify";
 import axios from "axios";
 import { getAllOrdersOfUser } from "../../redux/actions/order";
@@ -45,7 +40,7 @@ const ProfileContent = ({ active }) => {
       toast.success(successMessage);
       dispatch({ type: "clearMessages" });
     }
-  }, [error, successMessage, dispatch]);
+  }, [error, successMessage]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -53,147 +48,149 @@ const ProfileContent = ({ active }) => {
   };
 
   const handleImage = async (e) => {
-    const file = e.target.files[0];
-    setAvatar(file);
-    const formData = new FormData();
-    formData.append("image", file);
+    const reader = new FileReader();
 
-    await axios
-      .put(`${server}/user/update-avatar`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-        withCredentials: true,
-      })
-      .then((response) => {
-        dispatch(loadUser());
-        toast.success("Avatar updated successfully!");
-      })
-      .catch((error) => {
-        toast.error(error.response?.data?.message || "Failed to update avatar");
-      });
+    reader.onload = () => {
+      if (reader.readyState === 2) {
+        setAvatar(reader.result);
+        axios
+          .put(
+            `${server}/user/update-avatar`,
+            { avatar: reader.result },
+            {
+              withCredentials: true,
+            }
+          )
+          .then((response) => {
+            dispatch(loadUser());
+            toast.success("avatar updated successfully!");
+          })
+          .catch((error) => {
+            toast.error(error);
+          });
+      }
+    };
+
+    reader.readAsDataURL(e.target.files[0]);
   };
 
   return (
-    <div className="w-full bg-white rounded-xl shadow-md p-6 transition-all duration-300 hover:shadow-lg">
-      {/* Profile Section */}
+    <div className="w-full">
+      {/* profile */}
       {active === 1 && (
-        <div className="space-y-6 animate-fadeIn">
-          <div className="flex justify-center">
+        <>
+          <div className="flex justify-center w-full">
             <div className="relative">
               <img
-                src={user?.avatar}
-                className="w-[150px] h-[150px] rounded-full object-cover border-4 border-teal-500 shadow-md transition-transform duration-300 hover:scale-105"
-                alt="Avatar"
+                src={`${user?.avatar?.url}`}
+                className="w-[150px] h-[150px] rounded-full object-cover border-[3px] border-[#3ad132]"
+                alt=""
               />
-              <div className="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center cursor-pointer absolute bottom-2 right-2 shadow-md hover:bg-teal-200 transition-colors duration-200">
+              <div className="w-[30px] h-[30px] bg-[#E3E9EE] rounded-full flex items-center justify-center cursor-pointer absolute bottom-[5px] right-[5px]">
                 <input
                   type="file"
                   id="image"
                   className="hidden"
                   onChange={handleImage}
                 />
-                <label htmlFor="image" className="cursor-pointer">
-                  <AiOutlineCamera size={20} className="text-teal-600" />
+                <label htmlFor="image">
+                  <AiOutlineCamera />
                 </label>
               </div>
             </div>
           </div>
+          <br />
+          <br />
+          <div className="w-full px-5">
+            <form onSubmit={handleSubmit} aria-required={true}>
+              <div className="w-full 800px:flex block pb-3">
+                <div className=" w-[100%] 800px:w-[50%]">
+                  <label className="block pb-2">Full Name</label>
+                  <input
+                    type="text"
+                    className={`${styles.input} !w-[95%] mb-4 800px:mb-0`}
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                  />
+                </div>
+                <div className=" w-[100%] 800px:w-[50%]">
+                  <label className="block pb-2">Email Address</label>
+                  <input
+                    type="text"
+                    className={`${styles.input} !w-[95%] mb-1 800px:mb-0`}
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
+              </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 transition-all duration-200"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 transition-all duration-200"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-            </div>
+              <div className="w-full 800px:flex block pb-3">
+                <div className=" w-[100%] 800px:w-[50%]">
+                  <label className="block pb-2">Phone Number</label>
+                  <input
+                    type="number"
+                    className={`${styles.input} !w-[95%] mb-4 800px:mb-0`}
+                    required
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                  />
+                </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Phone Number
-                </label>
-                <input
-                  type="number"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 transition-all duration-200"
-                  required
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                />
+                <div className=" w-[100%] 800px:w-[50%]">
+                  <label className="block pb-2">Enter your password</label>
+                  <input
+                    type="password"
+                    className={`${styles.input} !w-[95%] mb-4 800px:mb-0`}
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Password
-                </label>
-                <input
-                  type="password"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 transition-all duration-200"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              className="w-full md:w-[250px] bg-teal-600 text-white py-2 rounded-md font-semibold shadow-md hover:bg-teal-700 hover:scale-105 transition-all duration-200"
-            >
-              Update
-            </button>
-          </form>
-        </div>
+              <input
+                className={`w-[250px] h-[40px] border border-[#3a24db] text-center text-[#3a24db] rounded-[3px] mt-8 cursor-pointer`}
+                required
+                value="Update"
+                type="submit"
+              />
+            </form>
+          </div>
+        </>
       )}
 
-      {/* Orders */}
+      {/* order */}
       {active === 2 && (
-        <div className="animate-slideIn">
+        <div>
           <AllOrders />
         </div>
       )}
 
-      {/* Refunds */}
+      {/* Refund */}
       {active === 3 && (
-        <div className="animate-slideIn">
+        <div>
           <AllRefundOrders />
         </div>
       )}
 
-      {/* Track Order */}
+      {/* Track order */}
       {active === 5 && (
-        <div className="animate-slideIn">
+        <div>
           <TrackOrder />
         </div>
       )}
 
       {/* Change Password */}
       {active === 6 && (
-        <div className="animate-slideIn">
+        <div>
           <ChangePassword />
         </div>
       )}
 
-      {/* Address */}
+      {/*  user Address */}
       {active === 7 && (
-        <div className="animate-slideIn">
+        <div>
           <Address />
         </div>
       )}
@@ -208,68 +205,62 @@ const AllOrders = () => {
 
   useEffect(() => {
     dispatch(getAllOrdersOfUser(user._id));
-  }, [dispatch, user._id]);
-
-  const columns = [
-    { field: "id", headerName: "Order ID", minWidth: 150, flex: 0.7 },
-    {
-      field: "status",
-      headerName: "Status",
-      minWidth: 130,
-      flex: 0.7,
-      cellClassName: (params) =>
-        params.getValue(params.id, "status") === "Delivered"
-          ? "text-green-600"
-          : "text-red-600",
-    },
-    {
-      field: "itemsQty",
-      headerName: "Items Qty",
-      type: "number",
-      minWidth: 130,
-      flex: 0.7,
-    },
-    {
-      field: "total",
-      headerName: "Total",
-      type: "number",
-      minWidth: 130,
-      flex: 0.8,
-    },
-    {
-      field: " ",
-      flex: 1,
-      minWidth: 150,
-      headerName: "",
-      sortable: false,
-      renderCell: (params) => (
-        <Link to={`/user/order/${params.id}`}>
-          <Button className="hover:text-teal-600 transition-colors duration-200">
-            <AiOutlineArrowRight size={20} />
-          </Button>
-        </Link>
-      ),
-    },
-  ];
-
-  const rows =
-    orders?.map((item) => ({
-      id: item._id,
-      itemsQty: item.cart.length,
-      total: "₹" + item.totalPrice,
-      status: item.status,
-    })) || [];
+  }, []);
 
   return (
-    <div className="pt-1 pl-0 md:pl-8">
-      <DataGrid
-        rows={rows}
-        columns={columns}
-        pageSize={10}
-        disableSelectionOnClick
-        autoHeight
-        className="rounded-lg shadow-md"
-      />
+    <div className="pl-8 pt-1">
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr>
+              <th className="text-left p-3 border border-gray-300">Order ID</th>
+              <th className="text-left p-3 border border-gray-300">Status</th>
+              <th className="text-left p-3 border border-gray-300">
+                Items Qty
+              </th>
+              <th className="text-left p-3 border border-gray-300">Total</th>
+              <th className="text-left p-3 border border-gray-300">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {orders && orders.length > 0 ? (
+              orders.map((item) => (
+                <tr key={item._id}>
+                  <td className="p-3 border border-gray-300">{item._id}</td>
+                  <td
+                    className={`p-3 border border-gray-300 ${
+                      item.status === "Delivered"
+                        ? "text-green-500"
+                        : "text-red-500"
+                    }`}
+                  >
+                    {item.status}
+                  </td>
+                  <td className="p-3 border border-gray-300">
+                    {item.cart.length}
+                  </td>
+                  <td className="p-3 border border-gray-300">
+                    US$ {item.totalPrice}
+                  </td>
+                  <td className="p-3 border border-gray-300">
+                    <Link to={`/user/order/${item._id}`}>
+                      <button className="flex items-center justify-center">
+                        <AiOutlineArrowRight size={20} />
+                      </button>
+                    </Link>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="5" className="p-3 text-center">
+                  No orders found
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };
@@ -281,70 +272,65 @@ const AllRefundOrders = () => {
 
   useEffect(() => {
     dispatch(getAllOrdersOfUser(user._id));
-  }, [dispatch, user._id]);
+  }, []);
 
   const eligibleOrders =
-    orders?.filter((item) => item.status === "Processing refund") || [];
-
-  const columns = [
-    { field: "id", headerName: "Order ID", minWidth: 150, flex: 0.7 },
-    {
-      field: "status",
-      headerName: "Status",
-      minWidth: 130,
-      flex: 0.7,
-      cellClassName: (params) =>
-        params.getValue(params.id, "status") === "Delivered"
-          ? "text-green-600"
-          : "text-red-600",
-    },
-    {
-      field: "itemsQty",
-      headerName: "Items Qty",
-      type: "number",
-      minWidth: 130,
-      flex: 0.7,
-    },
-    {
-      field: "total",
-      headerName: "Total",
-      type: "number",
-      minWidth: 130,
-      flex: 0.8,
-    },
-    {
-      field: " ",
-      flex: 1,
-      minWidth: 150,
-      headerName: "",
-      sortable: false,
-      renderCell: (params) => (
-        <Link to={`/user/order/${params.id}`}>
-          <Button className="hover:text-teal-600 transition-colors duration-200">
-            <AiOutlineArrowRight size={20} />
-          </Button>
-        </Link>
-      ),
-    },
-  ];
-
-  const rows = eligibleOrders.map((item) => ({
-    id: item._id,
-    itemsQty: item.cart.length,
-    total: "₹" + item.totalPrice,
-    status: item.status,
-  }));
+    orders && orders.filter((item) => item.status === "Processing refund");
 
   return (
-    <div className="pt-1 pl-0 md:pl-8">
-      <DataGrid
-        rows={rows}
-        columns={columns}
-        pageSize={10}
-        autoHeight
-        disableSelectionOnClick
-        className="rounded-lg shadow-md"
-      />
+    <div className="pl-8 pt-1">
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr>
+              <th className="text-left p-3 border border-gray-300">Order ID</th>
+              <th className="text-left p-3 border border-gray-300">Status</th>
+              <th className="text-left p-3 border border-gray-300">
+                Items Qty
+              </th>
+              <th className="text-left p-3 border border-gray-300">Total</th>
+              <th className="text-left p-3 border border-gray-300">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {eligibleOrders && eligibleOrders.length > 0 ? (
+              eligibleOrders.map((item) => (
+                <tr key={item._id}>
+                  <td className="p-3 border border-gray-300">{item._id}</td>
+                  <td
+                    className={`p-3 border border-gray-300 ${
+                      item.status === "Delivered"
+                        ? "text-green-500"
+                        : "text-red-500"
+                    }`}
+                  >
+                    {item.status}
+                  </td>
+                  <td className="p-3 border border-gray-300">
+                    {item.cart.length}
+                  </td>
+                  <td className="p-3 border border-gray-300">
+                    US$ {item.totalPrice}
+                  </td>
+                  <td className="p-3 border border-gray-300">
+                    <Link to={`/user/order/${item._id}`}>
+                      <button className="flex items-center justify-center">
+                        <AiOutlineArrowRight size={20} />
+                      </button>
+                    </Link>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="5" className="p-3 text-center">
+                  No refund orders found
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };
@@ -356,68 +342,62 @@ const TrackOrder = () => {
 
   useEffect(() => {
     dispatch(getAllOrdersOfUser(user._id));
-  }, [dispatch, user._id]);
-
-  const columns = [
-    { field: "id", headerName: "Order ID", minWidth: 150, flex: 0.7 },
-    {
-      field: "status",
-      headerName: "Status",
-      minWidth: 130,
-      flex: 0.7,
-      cellClassName: (params) =>
-        params.getValue(params.id, "status") === "Delivered"
-          ? "text-green-600"
-          : "text-red-600",
-    },
-    {
-      field: "itemsQty",
-      headerName: "Items Qty",
-      type: "number",
-      minWidth: 130,
-      flex: 0.7,
-    },
-    {
-      field: "total",
-      headerName: "Total",
-      type: "number",
-      minWidth: 130,
-      flex: 0.8,
-    },
-    {
-      field: " ",
-      flex: 1,
-      minWidth: 150,
-      headerName: "",
-      sortable: false,
-      renderCell: (params) => (
-        <Link to={`/user/track/order/${params.id}`}>
-          <Button className="hover:text-teal-600 transition-colors duration-200">
-            <MdTrackChanges size={20} />
-          </Button>
-        </Link>
-      ),
-    },
-  ];
-
-  const rows =
-    orders?.map((item) => ({
-      id: item._id,
-      itemsQty: item.cart.length,
-      total: "₹" + item.totalPrice,
-      status: item.status,
-    })) || [];
+  }, []);
 
   return (
-    <div className="pt-1 pl-0 md:pl-8">
-      <DataGrid
-        rows={rows}
-        columns={columns}
-        pageSize={10}
-        disableSelectionOnClick
-        autoHeight
-        className="rounded-lg shadow-md"
-      />
+    <div className="pl-8 pt-1">
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr>
+              <th className="text-left p-3 border border-gray-300">Order ID</th>
+              <th className="text-left p-3 border border-gray-300">Status</th>
+              <th className="text-left p-3 border border-gray-300">
+                Items Qty
+              </th>
+              <th className="text-left p-3 border border-gray-300">Total</th>
+              <th className="text-left p-3 border border-gray-300">Track</th>
+            </tr>
+          </thead>
+          <tbody>
+            {orders && orders.length > 0 ? (
+              orders.map((item) => (
+                <tr key={item._id}>
+                  <td className="p-3 border border-gray-300">{item._id}</td>
+                  <td
+                    className={`p-3 border border-gray-300 ${
+                      item.status === "Delivered"
+                        ? "text-green-500"
+                        : "text-red-500"
+                    }`}
+                  >
+                    {item.status}
+                  </td>
+                  <td className="p-3 border border-gray-300">
+                    {item.cart.length}
+                  </td>
+                  <td className="p-3 border border-gray-300">
+                    US$ {item.totalPrice}
+                  </td>
+                  <td className="p-3 border border-gray-300">
+                    <Link to={`/user/track/order/${item._id}`}>
+                      <button className="flex items-center justify-center">
+                        <MdTrackChanges size={20} />
+                      </button>
+                    </Link>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="5" className="p-3 text-center">
+                  No orders found
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };
@@ -429,6 +409,7 @@ const ChangePassword = () => {
 
   const passwordChangeHandler = async (e) => {
     e.preventDefault();
+
     await axios
       .put(
         `${server}/user/update-user-password`,
@@ -442,62 +423,58 @@ const ChangePassword = () => {
         setConfirmPassword("");
       })
       .catch((error) => {
-        toast.error(error.response?.data?.message || "Password update failed");
+        toast.error(error.response.data.message);
       });
   };
-
   return (
     <div className="w-full px-5">
-      <h1 className="text-2xl font-semibold text-gray-900 text-center mb-6">
+      <h1 className="block text-[25px] text-center font-[600] text-[#000000ba] pb-2">
         Change Password
       </h1>
-      <form
-        onSubmit={passwordChangeHandler}
-        className="flex flex-col items-center space-y-6 animate-fadeIn"
-      >
-        <div className="w-full md:w-1/2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Old Password
-          </label>
-          <input
-            type="password"
-            className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 transition-all duration-200"
-            required
-            value={oldPassword}
-            onChange={(e) => setOldPassword(e.target.value)}
-          />
-        </div>
-        <div className="w-full md:w-1/2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            New Password
-          </label>
-          <input
-            type="password"
-            className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 transition-all duration-200"
-            required
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-          />
-        </div>
-        <div className="w-full md:w-1/2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Confirm Password
-          </label>
-          <input
-            type="password"
-            className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 transition-all duration-200"
-            required
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-          />
-        </div>
-        <button
-          type="submit"
-          className="w-full md:w-[250px] bg-teal-600 text-white py-2 rounded-md font-semibold shadow-md hover:bg-teal-700 hover:scale-105 transition-all duration-200"
+      <div className="w-full">
+        <form
+          aria-required
+          onSubmit={passwordChangeHandler}
+          className="flex flex-col items-center"
         >
-          Update
-        </button>
-      </form>
+          <div className=" w-[100%] 800px:w-[50%] mt-5">
+            <label className="block pb-2">Enter your old password</label>
+            <input
+              type="password"
+              className={`${styles.input} !w-[95%] mb-4 800px:mb-0`}
+              required
+              value={oldPassword}
+              onChange={(e) => setOldPassword(e.target.value)}
+            />
+          </div>
+          <div className=" w-[100%] 800px:w-[50%] mt-2">
+            <label className="block pb-2">Enter your new password</label>
+            <input
+              type="password"
+              className={`${styles.input} !w-[95%] mb-4 800px:mb-0`}
+              required
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+            />
+          </div>
+          <div className=" w-[100%] 800px:w-[50%] mt-2">
+            <label className="block pb-2">Enter your confirm password</label>
+            <input
+              type="password"
+              className={`${styles.input} !w-[95%] mb-4 800px:mb-0`}
+              required
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+            />
+            <input
+              className={`w-[95%] h-[40px] border border-[#3a24db] text-center text-[#3a24db] rounded-[3px] mt-8 cursor-pointer`}
+              required
+              value="Update"
+              type="submit"
+            />
+          </div>
+        </form>
+      </div>
     </div>
   );
 };
@@ -506,7 +483,7 @@ const Address = () => {
   const [open, setOpen] = useState(false);
   const [country, setCountry] = useState("");
   const [city, setCity] = useState("");
-  const [zipCode, setZipCode] = useState("");
+  const [zipCode, setZipCode] = useState();
   const [address1, setAddress1] = useState("");
   const [address2, setAddress2] = useState("");
   const [addressType, setAddressType] = useState("");
@@ -514,13 +491,20 @@ const Address = () => {
   const dispatch = useDispatch();
 
   const addressTypeData = [
-    { name: "Default" },
-    { name: "Home" },
-    { name: "Office" },
+    {
+      name: "Default",
+    },
+    {
+      name: "Home",
+    },
+    {
+      name: "Office",
+    },
   ];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (addressType === "" || country === "" || city === "") {
       toast.error("Please fill all the fields!");
     } else {
@@ -539,7 +523,7 @@ const Address = () => {
       setCity("");
       setAddress1("");
       setAddress2("");
-      setZipCode("");
+      setZipCode(null);
       setAddressType("");
     }
   };
@@ -552,175 +536,189 @@ const Address = () => {
   return (
     <div className="w-full px-5">
       {open && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center transition-opacity duration-300">
-          <div className="w-[90%] sm:w-[60%] md:w-[40%] max-w-lg bg-white rounded-xl shadow-2xl relative p-6 overflow-y-auto max-h-[90vh] animate-slideIn">
-            <div className="flex justify-end p-3">
+        <div className="fixed w-full h-screen bg-[#0000004b] top-0 left-0 flex items-center justify-center ">
+          <div className="w-[35%] h-[80vh] bg-white rounded shadow relative overflow-y-scroll">
+            <div className="w-full flex justify-end p-3">
               <RxCross1
-                size={24}
-                className="cursor-pointer text-gray-600 hover:text-gray-900 transition-colors duration-200"
+                size={30}
+                className="cursor-pointer"
                 onClick={() => setOpen(false)}
               />
             </div>
-            <h1 className="text-xl font-semibold text-gray-900 text-center mb-6">
+            <h1 className="text-center text-[25px] font-Poppins">
               Add New Address
             </h1>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Country
-                </label>
-                <select
-                  value={country}
-                  onChange={(e) => setCountry(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 transition-all duration-200"
-                >
-                  <option value="">Choose your country</option>
-                  {Country.getAllCountries().map((item) => (
-                    <option key={item.isoCode} value={item.isoCode}>
-                      {item.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div className="w-full">
+              <form aria-required onSubmit={handleSubmit} className="w-full">
+                <div className="w-full block p-4">
+                  <div className="w-full pb-2">
+                    <label className="block pb-2">Country</label>
+                    <select
+                      name=""
+                      id=""
+                      value={country}
+                      onChange={(e) => setCountry(e.target.value)}
+                      className="w-[95%] border h-[40px] rounded-[5px]"
+                    >
+                      <option value="" className="block border pb-2">
+                        choose your country
+                      </option>
+                      {Country &&
+                        Country.getAllCountries().map((item) => (
+                          <option
+                            className="block pb-2"
+                            key={item.isoCode}
+                            value={item.isoCode}
+                          >
+                            {item.name}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  City
-                </label>
-                <select
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 transition-all duration-200"
-                >
-                  <option value="">Choose your city</option>
-                  {State.getStatesOfCountry(country).map((item) => (
-                    <option key={item.isoCode} value={item.isoCode}>
-                      {item.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                  <div className="w-full pb-2">
+                    <label className="block pb-2">Choose your City</label>
+                    <select
+                      name=""
+                      id=""
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                      className="w-[95%] border h-[40px] rounded-[5px]"
+                    >
+                      <option value="" className="block border pb-2">
+                        choose your city
+                      </option>
+                      {State &&
+                        State.getStatesOfCountry(country).map((item) => (
+                          <option
+                            className="block pb-2"
+                            key={item.isoCode}
+                            value={item.isoCode}
+                          >
+                            {item.name}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Address 1
-                </label>
-                <input
-                  type="text"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 transition-all duration-200"
-                  required
-                  value={address1}
-                  onChange={(e) => setAddress1(e.target.value)}
-                />
-              </div>
+                  <div className="w-full pb-2">
+                    <label className="block pb-2">Address 1</label>
+                    <input
+                      type="address"
+                      className={`${styles.input}`}
+                      required
+                      value={address1}
+                      onChange={(e) => setAddress1(e.target.value)}
+                    />
+                  </div>
+                  <div className="w-full pb-2">
+                    <label className="block pb-2">Address 2</label>
+                    <input
+                      type="address"
+                      className={`${styles.input}`}
+                      required
+                      value={address2}
+                      onChange={(e) => setAddress2(e.target.value)}
+                    />
+                  </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Address 2
-                </label>
-                <input
-                  type="text"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 transition-all duration-200"
-                  value={address2}
-                  onChange={(e) => setAddress2(e.target.value)}
-                />
-              </div>
+                  <div className="w-full pb-2">
+                    <label className="block pb-2">Zip Code</label>
+                    <input
+                      type="number"
+                      className={`${styles.input}`}
+                      required
+                      value={zipCode}
+                      onChange={(e) => setZipCode(e.target.value)}
+                    />
+                  </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Zip Code
-                </label>
-                <input
-                  type="number"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 transition-all duration-200"
-                  required
-                  value={zipCode}
-                  onChange={(e) => setZipCode(e.target.value)}
-                />
-              </div>
+                  <div className="w-full pb-2">
+                    <label className="block pb-2">Address Type</label>
+                    <select
+                      name=""
+                      id=""
+                      value={addressType}
+                      onChange={(e) => setAddressType(e.target.value)}
+                      className="w-[95%] border h-[40px] rounded-[5px]"
+                    >
+                      <option value="" className="block border pb-2">
+                        Choose your Address Type
+                      </option>
+                      {addressTypeData &&
+                        addressTypeData.map((item) => (
+                          <option
+                            className="block pb-2"
+                            key={item.name}
+                            value={item.name}
+                          >
+                            {item.name}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Address Type
-                </label>
-                <select
-                  value={addressType}
-                  onChange={(e) => setAddressType(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 transition-all duration-200"
-                >
-                  <option value="">Choose your address type</option>
-                  {addressTypeData.map((item) => (
-                    <option key={item.name} value={item.name}>
-                      {item.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <button
-                type="submit"
-                className="w-full bg-teal-600 text-white py-2 rounded-md font-semibold shadow-md hover:bg-teal-700 hover:scale-105 transition-all duration-200"
-              >
-                Add Address
-              </button>
-            </form>
+                  <div className=" w-full pb-2">
+                    <input
+                      type="submit"
+                      className={`${styles.input} mt-5 cursor-pointer`}
+                      required
+                      readOnly
+                    />
+                  </div>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}
-
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900">My Addresses</h1>
-        <button
-          className="bg-teal-600 text-white px-4 py-2 rounded-md font-semibold shadow-md hover:bg-teal-700 hover:scale-105 transition-all duration-200"
+      <div className="flex w-full items-center justify-between">
+        <h1 className="text-[25px] font-[600] text-[#000000ba] pb-2">
+          My Addresses
+        </h1>
+        <div
+          className={`${styles.button} !rounded-md`}
           onClick={() => setOpen(true)}
         >
-          Add New
-        </button>
-      </div>
-
-      {user && user.addresses.length > 0 ? (
-        <div className="space-y-4 animate-fadeIn">
-          {user.addresses.map((item, index) => (
-            <div
-              key={index}
-              className="w-full bg-white rounded-md shadow-md p-4 flex items-center justify-between transition-all duration-200 hover:bg-gray-50"
-            >
-              <div className="flex items-center">
-                <span className="w-2 h-2 bg-teal-500 rounded-full mr-3" />
-                <h5 className="text-sm font-semibold text-gray-800">
-                  {item.addressType}
-                </h5>
-              </div>
-              <div className="flex-1 ml-4">
-                <h6 className="text-sm text-gray-600">
-                  {item.address1} {item.address2},{" "}
-                  {
-                    State.getStateByCodeAndCountry(item.city, item.country)
-                      ?.name
-                  }
-                  , {Country.getCountryByCode(item.country)?.name},{" "}
-                  {item.zipCode}
-                </h6>
-                <h6 className="text-sm text-gray-600 mt-1">
-                  {user.phoneNumber}
-                </h6>
-              </div>
-              <button
-                className="text-red-500 hover:text-red-600 transition-colors duration-200"
-                onClick={() => handleDelete(item)}
-              >
-                <AiOutlineDelete size={20} />
-              </button>
-            </div>
-          ))}
+          <span className="text-[#fff]">Add New</span>
         </div>
-      ) : (
-        <h5 className="text-center pt-8 text-lg text-gray-600 animate-fadeIn">
-          You don’t have any saved addresses!
+      </div>
+      <br />
+      {user &&
+        user.addresses.map((item, index) => (
+          <div
+            className="w-full bg-white h-min 800px:h-[70px] rounded-[4px] flex items-center px-3 shadow justify-between pr-10 mb-5"
+            key={index}
+          >
+            <div className="flex items-center">
+              <h5 className="pl-5 font-[600]">{item.addressType}</h5>
+            </div>
+            <div className="pl-8 flex items-center">
+              <h6 className="text-[12px] 800px:text-[unset]">
+                {item.address1} {item.address2}
+              </h6>
+            </div>
+            <div className="pl-8 flex items-center">
+              <h6 className="text-[12px] 800px:text-[unset]">
+                {user && user.phoneNumber}
+              </h6>
+            </div>
+            <div className="min-w-[10%] flex items-center justify-between pl-8">
+              <AiOutlineDelete
+                size={25}
+                className="cursor-pointer"
+                onClick={() => handleDelete(item)}
+              />
+            </div>
+          </div>
+        ))}
+
+      {user && user.addresses.length === 0 && (
+        <h5 className="text-center pt-8 text-[18px]">
+          You not have any saved address!
         </h5>
       )}
     </div>
   );
 };
-
 export default ProfileContent;

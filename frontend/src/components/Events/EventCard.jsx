@@ -31,7 +31,7 @@ const EventCard = ({ active, data }) => {
       {/* Image Section */}
       <div className="w-28 h-28 sm:w-32 sm:h-32 flex-shrink-0 rounded-lg overflow-hidden bg-gray-50 shadow-inner transition-transform duration-500 hover:scale-105">
         <img
-          src={`${data?.images[0]}`}
+          src={`${data.images[0]?.url}`}
           alt={data.name}
           className="w-full h-full object-cover p-2"
         />

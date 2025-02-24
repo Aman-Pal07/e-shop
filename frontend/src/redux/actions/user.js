@@ -1,52 +1,36 @@
 import axios from "axios";
 import { server } from "../../server";
 
-// In redux/actions/user.js
+// load user
 export const loadUser = () => async (dispatch) => {
   try {
-    dispatch({ type: "LoadUserRequest" });
-
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      throw new Error("No authentication token found");
-    }
-
+    dispatch({
+      type: "LoadUserRequest",
+    });
     const { data } = await axios.get(`${server}/user/getuser`, {
       withCredentials: true,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
     });
-
-    dispatch({ type: "LoadUserSuccess", payload: data.user });
+    dispatch({
+      type: "LoadUserSuccess",
+      payload: data.user,
+    });
   } catch (error) {
-    console.error("Load user error:", {
-      message: error.response?.data?.message || error.message,
-      status: error.response?.status,
-      data: error.response?.data,
-    });
-
     dispatch({
       type: "LoadUserFail",
-      payload: error.response?.data?.message || "Failed to load user",
+      payload: error.response.data.message,
     });
   }
 };
+
 // load seller
 export const loadSeller = () => async (dispatch) => {
   try {
-    dispatch({ type: "LoadSellerRequest" });
-
+    dispatch({
+      type: "LoadSellerRequest",
+    });
     const { data } = await axios.get(`${server}/shop/getSeller`, {
       withCredentials: true,
     });
-
-    if (!data.seller) {
-      throw new Error("Seller not found");
-    }
-
     dispatch({
       type: "LoadSellerSuccess",
       payload: data.seller,
@@ -54,7 +38,7 @@ export const loadSeller = () => async (dispatch) => {
   } catch (error) {
     dispatch({
       type: "LoadSellerFail",
-      payload: error.response?.data?.message || "Seller not found",
+      payload: error.response.data.message,
     });
   }
 };
@@ -77,6 +61,9 @@ export const updateUserInformation =
         },
         {
           withCredentials: true,
+          headers: {
+            "Access-Control-Allow-Credentials": true,
+          },
         }
       );
 
@@ -151,6 +138,29 @@ export const deleteUserAddress = (id) => async (dispatch) => {
   } catch (error) {
     dispatch({
       type: "deleteUserAddressFailed",
+      payload: error.response.data.message,
+    });
+  }
+};
+
+// get all users --- admin
+export const getAllUsers = () => async (dispatch) => {
+  try {
+    dispatch({
+      type: "getAllUsersRequest",
+    });
+
+    const { data } = await axios.get(`${server}/user/admin-all-users`, {
+      withCredentials: true,
+    });
+
+    dispatch({
+      type: "getAllUsersSuccess",
+      payload: data.users,
+    });
+  } catch (error) {
+    dispatch({
+      type: "getAllUsersFailed",
       payload: error.response.data.message,
     });
   }

@@ -108,29 +108,18 @@ const Payment = () => {
         },
       };
 
-      // Create payment intent
       const { data } = await axios.post(
         `${server}/payment/process`,
         paymentData,
         config
       );
 
-      if (!stripe || !elements) {
-        return toast.error("Stripe is not loaded");
-      }
+      const client_secret = data.client_secret;
 
-      // Add billing details for India compliance
-      const result = await stripe.confirmCardPayment(data.client_secret, {
+      if (!stripe || !elements) return;
+      const result = await stripe.confirmCardPayment(client_secret, {
         payment_method: {
           card: elements.getElement(CardNumberElement),
-          billing_details: {
-            name: user?.name,
-            email: user?.email,
-            address: {
-              country: "IN", // Required for India
-              postal_code: user?.shippingAddress?.zipCode || "", // Required for India
-            },
-          },
         },
       });
 
@@ -138,7 +127,7 @@ const Payment = () => {
         toast.error(result.error.message);
       } else {
         if (result.paymentIntent.status === "succeeded") {
-          order.paymentInfo = {
+          order.paymnentInfo = {
             id: result.paymentIntent.id,
             status: result.paymentIntent.status,
             type: "Credit Card",
@@ -157,7 +146,7 @@ const Payment = () => {
         }
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || "Something went wrong");
+      toast.error(error);
     }
   };
 
@@ -426,22 +415,22 @@ const CartData = ({ orderData }) => {
     <div className="w-full bg-[#fff] rounded-md p-5 pb-8">
       <div className="flex justify-between">
         <h3 className="text-[16px] font-[400] text-[#000000a4]">subtotal:</h3>
-        <h5 className="text-[18px] font-[600]">₹{orderData?.subTotalPrice}</h5>
+        <h5 className="text-[18px] font-[600]">${orderData?.subTotalPrice}</h5>
       </div>
       <br />
       <div className="flex justify-between">
         <h3 className="text-[16px] font-[400] text-[#000000a4]">shipping:</h3>
-        <h5 className="text-[18px] font-[600]">₹{shipping}</h5>
+        <h5 className="text-[18px] font-[600]">${shipping}</h5>
       </div>
       <br />
       <div className="flex justify-between border-b pb-3">
         <h3 className="text-[16px] font-[400] text-[#000000a4]">Discount:</h3>
         <h5 className="text-[18px] font-[600]">
-          {orderData?.discountPrice ? "₹" + orderData.discountPrice : "-"}
+          {orderData?.discountPrice ? "$" + orderData.discountPrice : "-"}
         </h5>
       </div>
       <h5 className="text-[18px] font-[600] text-end pt-3">
-        ₹{orderData?.totalPrice}
+        ${orderData?.totalPrice}
       </h5>
       <br />
     </div>

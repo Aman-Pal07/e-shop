@@ -7,7 +7,6 @@ import { Link } from "react-router-dom";
 import { AiOutlineHeart } from "react-icons/ai";
 import { useDispatch, useSelector } from "react-redux";
 import { removeFromWishlist } from "../../redux/actions/wishlist";
-import { backend_url } from "../../server";
 import { addTocart } from "../../redux/actions/cart";
 
 const Wishlist = ({ setOpenWishlist }) => {
@@ -89,7 +88,7 @@ const CartSingle = ({ data, removeFromWishlistHandler, addToCartHandler }) => {
           onClick={() => removeFromWishlistHandler(data)}
         />
         <img
-          src={`${data?.images[0]}`}
+          src={`${data?.images[0]?.url}`}
           alt=""
           className="w-[130px] h-min ml-2 mr-2 rounded-[5px]"
         />

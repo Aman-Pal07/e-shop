@@ -14,7 +14,6 @@ import { CgProfile } from "react-icons/cg";
 import DropDown from "./DropDown";
 import Navbar from "./Navbar";
 import { useSelector } from "react-redux";
-import { backend_url } from "../../server";
 import Cart from "../cart/Cart";
 import Wishlist from "../Wishlist/Wishlist";
 import { RxCross1 } from "react-icons/rx";
@@ -82,7 +81,7 @@ const Header = ({ activeHeading }) => {
             <div className="relative h-[60px] mt-[10px] w-[270px] hidden xl:block pb-16">
               <div className="text-center ">
                 <Link to="/">
-                  <h1 className="text-2xl font-serif font-bold text-gray-900 uppercase tracking-wide">
+                  <h1 className=" font-serif font-bold text-gray-900 uppercase tracking-wide">
                     Great Way Studio
                   </h1>
                   <div className="text-gray-600 text-xs">
@@ -151,7 +150,7 @@ const Header = ({ activeHeading }) => {
                 {isAuthenticated ? (
                   <Link to="/profile">
                     <img
-                      src={user?.avatar}
+                      src={`${user?.avatar?.url}`}
                       className="w-[35px] h-[35px] rounded-full border-2 border-gray-700 group-hover:border-blue-600 transition-colors"
                       alt=""
                     />
@@ -291,7 +290,7 @@ const Header = ({ activeHeading }) => {
                 {isAuthenticated ? (
                   <Link to="/profile" onClick={() => setOpen(false)}>
                     <img
-                      src={`${user?.avatar}`}
+                      src={`${user.avatar?.url}`}
                       alt="Profile"
                       className="w-14 h-14 rounded-full border-2 border-blue-600 hover:border-blue-700 transition-colors"
                     />

@@ -4,7 +4,7 @@ import { Link, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import styles from "../styles/styles";
 import { getAllOrdersOfUser } from "../redux/actions/order";
-import { backend_url, server } from "../server";
+import { server } from "../server";
 import { RxCross1 } from "react-icons/rx";
 import { AiFillStar, AiOutlineStar } from "react-icons/ai";
 import axios from "axios";
@@ -23,7 +23,7 @@ const UserOrderDetails = () => {
 
   useEffect(() => {
     dispatch(getAllOrdersOfUser(user._id));
-  }, [dispatch]);
+  }, [dispatch, user._id]);
 
   const data = orders && orders.find((item) => item._id === id);
 
@@ -53,14 +53,17 @@ const UserOrderDetails = () => {
   };
 
   const refundHandler = async () => {
-    await axios.put(`${server}/order/order-refund/${id}`,{
-      status: "Processing refund"
-    }).then((res) => {
-       toast.success(res.data.message);
-    dispatch(getAllOrdersOfUser(user._id));
-    }).catch((error) => {
-      toast.error(error.response.data.message);
-    })
+    await axios
+      .put(`${server}/order/order-refund/${id}`, {
+        status: "Processing refund",
+      })
+      .then((res) => {
+        toast.success(res.data.message);
+        dispatch(getAllOrdersOfUser(user._id));
+      })
+      .catch((error) => {
+        toast.error(error.response.data.message);
+      });
   };
 
   return (
@@ -85,29 +88,31 @@ const UserOrderDetails = () => {
       <br />
       <br />
       {data &&
-        data?.cart.map((item, index) => (
-          <div className="w-full flex items-start mb-5">
-            <img
-              src={`${backend_url}/${item.images[0]}`}
-              alt=""
-              className="w-[80x] h-[80px]"
-            />
-            <div className="w-full">
-              <h5 className="pl-3 text-[20px]">{item.name}</h5>
-              <h5 className="pl-3 text-[20px] text-[#00000091]">
-                US${item.discountPrice} x {item.qty}
-              </h5>
-            </div>
-            {item.isReviewed || item.status !== "delivered" ? null : (
-              <div
-                className={`${styles.button} text-[#fff]`}
-                onClick={() => setOpen(true) || setSelectedItem(item)}
-              >
-                Write a review
+        data?.cart.map((item, index) => {
+          return (
+            <div className="w-full flex items-start mb-5">
+              <img
+                src={`${item.images[0]?.url}`}
+                alt=""
+                className="w-[80x] h-[80px]"
+              />
+              <div className="w-full">
+                <h5 className="pl-3 text-[20px]">{item.name}</h5>
+                <h5 className="pl-3 text-[20px] text-[#00000091]">
+                  US${item.discountPrice} x {item.qty}
+                </h5>
               </div>
-            )}
-          </div>
-        ))}
+              {!item.isReviewed && data?.status === "Delivered" ? (
+                <div
+                  className={`${styles.button} text-[#fff]`}
+                  onClick={() => setOpen(true) || setSelectedItem(item)}
+                >
+                  Write a review
+                </div>
+              ) : null}
+            </div>
+          );
+        })}
 
       {/* review popup */}
       {open && (
@@ -126,7 +131,7 @@ const UserOrderDetails = () => {
             <br />
             <div className="w-full flex">
               <img
-                src={`${backend_url}/${selectedItem?.images[0]}`}
+                src={`${selectedItem?.images[0]?.url}`}
                 alt=""
                 className="w-[80px] h-[80px]"
               />
@@ -221,13 +226,14 @@ const UserOrderDetails = () => {
             {data?.paymentInfo?.status ? data?.paymentInfo?.status : "Not Paid"}
           </h4>
           <br />
-           {
-            data?.status === "Delivered" && (
-              <div className={`${styles.button} text-white`}
+          {data?.status === "Delivered" && (
+            <div
+              className={`${styles.button} text-white`}
               onClick={refundHandler}
-              >Give a Refund</div>
-            )
-           }
+            >
+              Give a Refund
+            </div>
+          )}
         </div>
       </div>
       <br />

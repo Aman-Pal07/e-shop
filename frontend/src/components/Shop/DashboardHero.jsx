@@ -1,176 +1,198 @@
-import React, { useEffect, useState } from "react";
-import { AiOutlineArrowRight, AiOutlineMoneyCollect } from "react-icons/ai";
-import styles from "../../styles/styles";
+import React from "react";
 import { Link } from "react-router-dom";
-import { MdBorderClear } from "react-icons/md";
-import { useDispatch, useSelector } from "react-redux";
-import { getAllOrdersOfShop } from "../../redux/actions/order";
-import { getAllProductsShop } from "../../redux/actions/product";
-import { Button } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
+import {
+  AiOutlineArrowRight,
+  AiOutlineMoneyCollect,
+  AiOutlineShoppingCart,
+} from "react-icons/ai";
+import { MdInventory } from "react-icons/md";
+import { useSelector } from "react-redux";
 
 const DashboardHero = () => {
-  const dispatch = useDispatch();
-  const { orders } = useSelector((state) => state.order);
-  const { seller } = useSelector((state) => state.seller);
-  const { products } = useSelector((state) => state.products);
-  const [deliveredOrder, setDeliveredOrder] = useState(orders && orders);
+  const { orders = [] } = useSelector((state) => state.order);
+  const { products = [] } = useSelector((state) => state.products);
 
-  useEffect(() => {
-    dispatch(getAllOrdersOfShop(seller._id));
-    dispatch(getAllProductsShop(seller._id));
+  // Calculate metrics with safeguards for data issues
+  const deliveredOrders = orders.filter((item) => item.status === "Delivered");
 
-    const orderData =
-      orders && orders.filter((item) => item.status === "Delivered");
-    setDeliveredOrder(orderData);
-  }, [dispatch]);
+  // Ensure totalPrice is treated as a number for all calculations
+  const totalEarningWithoutTax = deliveredOrders.reduce(
+    (acc, item) =>
+      acc +
+      (typeof item.totalPrice === "number"
+        ? item.totalPrice
+        : parseFloat(item.totalPrice) || 0),
+    0
+  );
 
-  const totalEarningWithoutTax = deliveredOrder
-    ? deliveredOrder.reduce((acc, item) => acc + item.totalPrice, 0)
-    : 0;
+  const serviceCharge = totalEarningWithoutTax * 0.1;
+  const availableBalance = (totalEarningWithoutTax - serviceCharge).toFixed(2);
 
-  const serviceCharge = totalEarningWithoutTax
-    ? totalEarningWithoutTax * 0.1
-    : 0;
-  const availableBalance =
-    (totalEarningWithoutTax - serviceCharge).toFixed(2) || 0;
+  const StatCard = ({ icon: Icon, title, value, link, subtitle }) => (
+    <div className="bg-white rounded-lg shadow-md p-6 transition-all duration-300 hover:shadow-lg">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center">
+          <Icon className="text-gray-600 w-8 h-8" />
+          <div className="ml-4">
+            <h3 className="text-gray-600 text-lg font-medium">{title}</h3>
+            {subtitle && (
+              <p className="text-gray-500 text-sm mt-1">{subtitle}</p>
+            )}
+          </div>
+        </div>
+      </div>
+      <div className="flex items-center justify-between">
+        <span className="text-2xl font-semibold text-gray-800">{value}</span>
+        {link && (
+          <Link
+            to={link}
+            className="text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors duration-200"
+          >
+            View Details →
+          </Link>
+        )}
+      </div>
+    </div>
+  );
 
   const columns = [
-    { field: "id", headerName: "Order ID", minWidth: 150, flex: 0.7 },
-
+    {
+      field: "id",
+      headerName: "Order ID",
+      minWidth: 200,
+      flex: 1,
+      renderCell: (params) => (
+        <span className="font-medium text-gray-800">{params.value}</span>
+      ),
+    },
     {
       field: "status",
       headerName: "Status",
       minWidth: 130,
       flex: 0.7,
-      cellClassName: (params) => {
-        return params.getValue(params.id, "status") === "Delivered"
-          ? "greenColor"
-          : "redColor";
-      },
+      renderCell: (params) => (
+        <div
+          className={`py-1 px-3 rounded-full ${
+            params.value === "Delivered"
+              ? "bg-green-100 text-green-800"
+              : params.value === "Processing"
+              ? "bg-yellow-100 text-yellow-800"
+              : "bg-gray-100 text-gray-800"
+          }`}
+        >
+          {params.value || "Pending"}
+        </div>
+      ),
     },
     {
       field: "itemsQty",
-      headerName: "Items Qty",
+      headerName: "Items",
       type: "number",
-      minWidth: 130,
-      flex: 0.7,
+      minWidth: 100,
+      flex: 0.5,
+      renderCell: (params) => (
+        <span className="font-medium">{params.value}</span>
+      ),
     },
-
     {
       field: "total",
       headerName: "Total",
-      type: "number",
       minWidth: 130,
-      flex: 0.8,
+      flex: 0.7,
+      renderCell: (params) => (
+        <span className="font-semibold">{params.value}</span>
+      ),
     },
-
     {
-      field: " ",
-      flex: 1,
-      minWidth: 150,
-      headerName: "",
-      type: "number",
+      field: "action",
+      headerName: "Action",
+      minWidth: 100,
+      flex: 0.5,
       sortable: false,
-      renderCell: (params) => {
-        return (
-          <>
-            <Link to={`/dashboard/order/${params.id}`}>
-              <Button>
-                <AiOutlineArrowRight size={20} />
-              </Button>
-            </Link>
-          </>
-        );
-      },
+      renderCell: (params) => (
+        <Link
+          to={`/dashboard/order/${params.row.id}`}
+          className="text-blue-600 hover:text-blue-800 transition-colors duration-200"
+        >
+          <AiOutlineArrowRight size={20} />
+        </Link>
+      ),
     },
   ];
 
-  const row = [];
+  const rows = orders.map((item) => ({
+    id: item._id.$oid || item._id, // Handle different ID formats
+    itemsQty: Array.isArray(item.cart)
+      ? item.cart.reduce((acc, cartItem) => acc + (cartItem.qty || 1), 0)
+      : 0,
+    total: `$${
+      typeof item.totalPrice === "number"
+        ? item.totalPrice.toFixed(2)
+        : parseFloat(item.totalPrice).toFixed(2) || "0.00"
+    }`,
+    status: item.status || "Pending",
+  }));
 
-  orders &&
-    orders.forEach((item) => {
-      row.push({
-        id: item._id,
-        itemsQty: item.cart.reduce((acc, item) => acc + item.qty, 0),
-        total: "US$ " + item.totalPrice,
-        status: item.status,
-      });
-    });
   return (
-    <div className="w-full p-8">
-      <h3 className="text-[22px] font-Poppins pb-2">Overview</h3>
-      <div className="w-full block 800px:flex items-center justify-between">
-        <div className="w-full mb-4 800px:w-[30%] min-h-[20vh] bg-white shadow rounded px-2 py-5">
-          <div className="flex items-center">
-            <AiOutlineMoneyCollect
-              size={30}
-              className="mr-2"
-              fill="#00000085"
-            />
-            <h3
-              className={`${styles.productTitle} !text-[18px] leading-5 !font-[400] text-[#00000085]`}
-            >
-              Account Balance{" "}
-              <span className="text-[16px]">(with 10% service charge)</span>
-            </h3>
-          </div>
-          <h5 className="pt-2 pl-[36px] text-[22px] font-[500]">
-            ${availableBalance}
-          </h5>
-          <Link to="/dashboard-withdraw-money">
-            <h5 className="pt-4 pl-[2] text-[#077f9c]">Withdraw Money</h5>
-          </Link>
-        </div>
-
-        <div className="w-full mb-4 800px:w-[30%] min-h-[20vh] bg-white shadow rounded px-2 py-5">
-          <div className="flex items-center">
-            <MdBorderClear size={30} className="mr-2" fill="#00000085" />
-            <h3
-              className={`${styles.productTitle} !text-[18px] leading-5 !font-[400] text-[#00000085]`}
-            >
-              All Orders
-            </h3>
-          </div>
-          <h5 className="pt-2 pl-[36px] text-[22px] font-[500]">
-            {orders && orders.length}
-          </h5>
-          <Link to="/dashboard-orders">
-            <h5 className="pt-4 pl-2 text-[#077f9c]">View Orders</h5>
-          </Link>
-        </div>
-
-        <div className="w-full mb-4 800px:w-[30%] min-h-[20vh] bg-white shadow rounded px-2 py-5">
-          <div className="flex items-center">
-            <AiOutlineMoneyCollect
-              size={30}
-              className="mr-2"
-              fill="#00000085"
-            />
-            <h3
-              className={`${styles.productTitle} !text-[18px] leading-5 !font-[400] text-[#00000085]`}
-            >
-              All Products
-            </h3>
-          </div>
-          <h5 className="pt-2 pl-[36px] text-[22px] font-[500]">
-            {products && products.length}
-          </h5>
-          <Link to="/dashboard-products">
-            <h5 className="pt-4 pl-2 text-[#077f9c]">View Products</h5>
-          </Link>
+    <div className="p-6 max-w-7xl mx-auto">
+      <div className="mb-8">
+        <h2 className="text-2xl font-semibold text-gray-800 mb-6">
+          Dashboard Overview
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <StatCard
+            icon={AiOutlineMoneyCollect}
+            title="Available Balance"
+            subtitle="After 10% service charge"
+            value={`$${availableBalance}`}
+            link="/dashboard-withdraw-money"
+          />
+          <StatCard
+            icon={AiOutlineShoppingCart}
+            title="Total Orders"
+            value={orders.length}
+            link="/dashboard-orders"
+          />
+          <StatCard
+            icon={MdInventory}
+            title="Total Products"
+            value={products.length}
+            link="/dashboard-products"
+          />
         </div>
       </div>
-      <br />
-      <h3 className="text-[22px] font-Poppins pb-2">Latest Orders</h3>
-      <div className="w-full min-h-[45vh] bg-white rounded">
-        <DataGrid
-          rows={row}
-          columns={columns}
-          pageSize={10}
-          disableSelectionOnClick
-          autoHeight
-        />
+
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-xl font-semibold text-gray-800">Recent Orders</h3>
+          <Link
+            to="/dashboard-orders"
+            className="text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors duration-200"
+          >
+            View All Orders →
+          </Link>
+        </div>
+        <div className="h-[500px] w-full">
+          <DataGrid
+            rows={rows}
+            columns={columns}
+            pageSize={10}
+            rowsPerPageOptions={[10]}
+            checkboxSelection={false}
+            disableSelectionOnClick
+            autoHeight
+            className="border-none"
+            sx={{
+              "& .MuiDataGrid-cell:focus": {
+                outline: "none",
+              },
+              "& .MuiDataGrid-row:hover": {
+                backgroundColor: "#f9fafb",
+              },
+            }}
+          />
+        </div>
       </div>
     </div>
   );
