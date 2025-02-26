@@ -1,34 +1,39 @@
 import { createReducer } from "@reduxjs/toolkit";
 
-const initialState = {
-  wishlist: localStorage.getItem("wishlistItems")
-    ? JSON.parse(localStorage.getItem("wishlistItems"))
-    : [],
+const loadWishlistFromLocalStorage = () => {
+  try {
+    const wishlistItems = localStorage.getItem("wishlistItems");
+    return wishlistItems ? JSON.parse(wishlistItems) : [];
+  } catch (error) {
+    console.error("Error loading wishlist from localStorage:", error);
+    return [];
+  }
 };
 
-export const wishlistReducer = createReducer(initialState, {
-  addToWishlist: (state, action) => {
-    const item = action.payload;
-    const isItemExist = state.wishlist.find((i) => i._id === item._id);
-    if (isItemExist) {
-      return {
-        ...state,
-        wishlist: state.wishlist.map((i) =>
-          i._id === isItemExist._id ? item : i
-        ),
-      };
-    } else {
-      return {
-        ...state,
-        wishlist: [...state.wishlist, item],
-      };
-    }
-  },
+const initialState = {
+  wishlist: loadWishlistFromLocalStorage(),
+};
 
-  removeFromWishlist: (state, action) => {
-    return {
-      ...state,
-      wishlist: state.wishlist.filter((i) => i._id !== action.payload),
-    };
-  },
+export const wishlistReducer = createReducer(initialState, (builder) => {
+  builder
+    .addCase("addToWishlist", (state, action) => {
+      const item = action.payload;
+      const isItemExist = state.wishlist.find((i) => i._id === item._id);
+
+      if (isItemExist) {
+        // Update existing item
+        state.wishlist = state.wishlist.map((i) =>
+          i._id === item._id ? item : i
+        );
+      } else {
+        // Add new item
+        state.wishlist.push(item);
+      }
+
+      localStorage.setItem("wishlistItems", JSON.stringify(state.wishlist));
+    })
+    .addCase("removeFromWishlist", (state, action) => {
+      state.wishlist = state.wishlist.filter((i) => i._id !== action.payload);
+      localStorage.setItem("wishlistItems", JSON.stringify(state.wishlist));
+    });
 });
