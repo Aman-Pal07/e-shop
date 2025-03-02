@@ -140,7 +140,7 @@ const Header = ({ activeHeading }) => {
                 {isAuthenticated ? (
                   <Link to="/profile">
                     <img
-                      src={`${user.avatar?.url}`}
+                      src={`${user.avatar}`}
                       className="w-[35px] h-[35px] rounded-full border-2 border-gray-700 group-hover:border-blue-600 transition-colors"
                       alt=""
                     />

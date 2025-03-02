@@ -11,6 +11,26 @@ const sendMail = require("../utils/sendMail");
 const sendToken = require("../utils/jwtToken");
 const { isAuthenticated } = require("../middleware/auth");
 
+// Store verification codes and timestamps
+const verificationCodes = new Map();
+
+// Generate a random 4-digit code
+const generateVerificationCode = () => {
+  return Math.floor(1000 + Math.random() * 9000).toString();
+};
+
+// Check if a minute has passed since the last code was sent
+const canSendNewCode = (email) => {
+  if (!verificationCodes.has(email)) {
+    return true;
+  }
+
+  const lastSent = verificationCodes.get(email).timestamp;
+  const currentTime = Date.now();
+  const oneMinute = 60 * 1000; // in milliseconds
+
+  return currentTime - lastSent >= oneMinute;
+};
 router.post("/create-user", upload.single("file"), async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
@@ -20,28 +40,52 @@ router.post("/create-user", upload.single("file"), async (req, res, next) => {
       return next(new ErrorHandler("User already exists", 400));
     }
 
-    // Cloudinary file URL
-    const fileUrl = req.file.path;
+    // Check if we can send a new code
+    if (!canSendNewCode(email)) {
+      return next(
+        new ErrorHandler(
+          "Please wait 1 minute before requesting another code",
+          400
+        )
+      );
+    }
 
-    const user = {
-      name: name,
-      email: email,
-      password: password,
-      avatar: fileUrl, // Save Cloudinary URL instead of local path
+    // Check if file exists
+    let fileUrl = null;
+    if (req.file) {
+      fileUrl = req.file.path;
+    } else {
+      // Set a default avatar or handle no file case
+      fileUrl = "default_avatar.jpg"; // Or whatever default you want to use
+    }
+
+    const userData = {
+      name,
+      email,
+      password,
+      avatar: fileUrl,
     };
 
-    const activationToken = createActivationToken(user);
-    const activationUrl = `https://e-shop-qzyr.vercel.app/activation/${activationToken}`;
+    // Generate a 4-digit verification code
+    const verificationCode = generateVerificationCode();
+
+    // Store the code and user data with timestamp
+    verificationCodes.set(email, {
+      code: verificationCode,
+      userData,
+      timestamp: Date.now(),
+    });
 
     try {
       await sendMail({
-        email: user.email,
-        subject: "Activate your account",
-        message: `Hello ${user.name}, please click on the link to activate your account: ${activationUrl}`,
+        email: userData.email,
+        subject: "Verify your account",
+        message: `Hello ${userData.name}, your verification code is: ${verificationCode}. This code expires in 5 minutes.`,
       });
+
       res.status(201).json({
         success: true,
-        message: `please check your email:- ${user.email} to activate your account!`,
+        message: `Please check your email: ${userData.email} for the verification code!`,
       });
     } catch (error) {
       return next(new ErrorHandler(error.message, 500));
@@ -51,41 +95,102 @@ router.post("/create-user", upload.single("file"), async (req, res, next) => {
   }
 });
 
-// create activation token
-const createActivationToken = (user) => {
-  return jwt.sign(user, process.env.ACTIVATION_SECRET, {
-    expiresIn: "5m",
-  });
-};
-
-// activate user
 router.post(
-  "/activation",
+  "/resend-verification-code",
   catchAsyncErrors(async (req, res, next) => {
     try {
-      const { activation_token } = req.body;
+      const { email } = req.body;
 
-      const newUser = jwt.verify(
-        activation_token,
-        process.env.ACTIVATION_SECRET
-      );
-
-      if (!newUser) {
-        return next(new ErrorHandler("Invalid token", 400));
+      if (!verificationCodes.has(email)) {
+        return next(
+          new ErrorHandler("No pending registration found for this email", 400)
+        );
       }
-      const { name, email, password, avatar } = newUser;
 
-      let user = await User.findOne({ email });
-
-      if (user) {
-        return next(new ErrorHandler("User already exists", 400));
+      // Check if a minute has passed
+      if (!canSendNewCode(email)) {
+        return next(
+          new ErrorHandler(
+            "Please wait 1 minute before requesting another code",
+            400
+          )
+        );
       }
-      user = await User.create({
+
+      const userData = verificationCodes.get(email).userData;
+
+      // Generate a new verification code
+      const verificationCode = generateVerificationCode();
+
+      // Update the code and timestamp
+      verificationCodes.set(email, {
+        code: verificationCode,
+        userData,
+        timestamp: Date.now(),
+      });
+
+      await sendMail({
+        email: userData.email,
+        subject: "Verify your account",
+        message: `Hello ${userData.name}, your new verification code is: ${verificationCode}. This code expires in 5 minutes.`,
+      });
+
+      res.status(200).json({
+        success: true,
+        message: `New verification code sent to ${email}`,
+      });
+    } catch (error) {
+      return next(new ErrorHandler(error.message, 500));
+    }
+  })
+);
+
+// Verify email with code
+router.post(
+  "/verify-email",
+  catchAsyncErrors(async (req, res, next) => {
+    try {
+      const { email, code } = req.body;
+
+      if (!verificationCodes.has(email)) {
+        return next(
+          new ErrorHandler("Verification code expired or not found", 400)
+        );
+      }
+
+      const storedData = verificationCodes.get(email);
+
+      // Check if code is correct
+      if (storedData.code !== code) {
+        return next(new ErrorHandler("Invalid verification code", 400));
+      }
+
+      // Check if code is expired (5 minutes)
+      const fiveMinutes = 5 * 60 * 1000; // 5 minutes in milliseconds
+      const timeElapsed = Date.now() - storedData.timestamp;
+
+      if (timeElapsed > fiveMinutes) {
+        verificationCodes.delete(email);
+        return next(
+          new ErrorHandler(
+            "Verification code expired. Please request a new one.",
+            400
+          )
+        );
+      }
+
+      const { name, email: userEmail, password, avatar } = storedData.userData;
+
+      // Create user in the database
+      const user = await User.create({
         name,
-        email,
+        email: userEmail,
         avatar,
         password,
       });
+
+      // Remove from verification codes map after successful registration
+      verificationCodes.delete(email);
 
       sendToken(user, 201, res);
     } catch (error) {
